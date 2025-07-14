@@ -1,6 +1,7 @@
 package styles
 
 const (
+	// Bg = Slate950
 	Bg            = Slate900
 	Fg            = Slate50
 	Border        = Slate600

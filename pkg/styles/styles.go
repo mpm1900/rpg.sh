@@ -11,14 +11,16 @@ var (
 			MarginBackground(Bg)
 
 	ButtonStyle = BaseStyle.
-			Foreground(SecondaryFg).
-			Background(Secondary).
 			Padding(0, 3).
 			MarginTop(1)
 
 	PrimaryButtonStyle = ButtonStyle.
 				Background(Primary).
 				Foreground(PrimaryFg)
+
+	SecondaryButtonStyle = ButtonStyle.
+				Background(Secondary).
+				Foreground(SecondaryFg)
 
 	DialogBoxStyle = BaseStyle.
 			Background(Card).
@@ -45,3 +47,21 @@ var (
 			MarginRight(1).
 			MarginBackground(Muted)
 )
+
+// Buttons
+type ButtonProps struct {
+	Variant string
+	Active  bool
+}
+
+func Button(props ButtonProps) lipgloss.Style {
+	if props.Variant == "primary" {
+		return PrimaryButtonStyle
+	}
+
+	if props.Active {
+		return PrimaryButtonStyle
+	}
+
+	return SecondaryButtonStyle
+}

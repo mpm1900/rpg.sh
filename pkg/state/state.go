@@ -13,7 +13,7 @@ type View interface {
 	tea.Model
 	ID() string
 	Status() string
-	SetParent(parent GameState)
+	SetParent(parent *GameState)
 }
 
 type GameState struct {
@@ -58,12 +58,16 @@ func (s GameState) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	view := s.Views[s.ViewID]
-	if view == nil {
+	view, ok := s.Views[s.ViewID]
+	if !ok {
 		return s, nil
 	}
-	view.SetParent(s)
-	return view.Update(msg)
+
+	view.SetParent(&s)
+	updatedView, cmd := view.Update(msg)
+	s.Views[s.ViewID] = updatedView.(View)
+
+	return s, cmd
 }
 
 func (s GameState) View() string {
@@ -73,14 +77,15 @@ func (s GameState) View() string {
 	}
 
 	buf := strings.Builder{}
-	view.SetParent(s)
-	buf.WriteString(view.View() + "\n")
+	view.SetParent(&s)
 
 	status := styles.StatusStyle.Render(view.Status())
 	bar := styles.StatusBarStyle.
 		Width(s.Width).
 		Render(lipgloss.JoinHorizontal(lipgloss.Top, status))
-	buf.WriteString(bar)
 
+	template := lipgloss.JoinVertical(lipgloss.Center, view.View(), bar)
+
+	buf.WriteString(template)
 	return buf.String()
 }

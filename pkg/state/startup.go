@@ -13,7 +13,7 @@ import (
 type Startup struct {
 	id     string
 	focus  string
-	parent GameState
+	parent *GameState
 }
 
 func NewStartup() *Startup {
@@ -23,7 +23,7 @@ func NewStartup() *Startup {
 	}
 }
 
-func (s *Startup) SetParent(parent GameState) {
+func (s *Startup) SetParent(parent *GameState) {
 	s.parent = parent
 }
 
@@ -35,35 +35,55 @@ func (s Startup) Status() string {
 	return "STARTUP"
 }
 
-func (s Startup) Init() tea.Cmd {
+func (s *Startup) Init() tea.Cmd {
 	return nil
 }
 
-func (s Startup) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s *Startup) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "right", "l":
+			s.focus = "quit"
+		case "left", "h":
+			s.focus = "start"
+		case "enter":
+			if s.focus == "quit" {
+				return s, tea.Quit
+			}
+		}
+	}
 	return s, nil
 }
 
-func (s Startup) View() string {
+func (s *Startup) View() string {
 	buf := strings.Builder{}
 
-	startButton := styles.PrimaryButtonStyle.MarginBackground(styles.Card).MarginRight(2).Render("Start")
-	quitButton := styles.ButtonStyle.MarginBackground(styles.Card).Render("Quit")
+	startButton := styles.Button(styles.ButtonProps{
+		Active: s.focus == "start",
+	}).
+		MarginBackground(styles.Card).
+		MarginRight(2)
+	quitButton := styles.Button(styles.ButtonProps{
+		Active: s.focus == "quit",
+	}).
+		MarginBackground(styles.Card)
 
-	buttons := lipgloss.JoinHorizontal(lipgloss.Top, startButton, quitButton)
+	buttons := lipgloss.JoinHorizontal(lipgloss.Top, startButton.Render("Start"), quitButton.Render("Quit"))
 	ui := lipgloss.JoinVertical(lipgloss.Center, "rpg.ssh", buttons)
 
 	dialog := lipgloss.Place(
 		s.parent.Width,
-		s.parent.Height-1,
+		s.parent.Height,
 		lipgloss.Center,
 		lipgloss.Center,
 
 		styles.DialogBoxStyle.Render(ui),
 		lipgloss.WithWhitespaceBackground(styles.Bg),
 		lipgloss.WithWhitespaceForeground(styles.Card),
-		lipgloss.WithWhitespaceChars("#"),
+		// lipgloss.WithWhitespaceChars("#"),
 	)
-	buf.WriteString(dialog + "\n")
+	buf.WriteString(dialog)
 
 	return buf.String()
 }
